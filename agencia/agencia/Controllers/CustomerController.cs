@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using agencia.Database;
 using agencia.DTOs;
 using Microsoft.AspNetCore.Mvc;
 using agencia.Models;
@@ -13,9 +14,9 @@ namespace agencia.Controllers
     {
         private readonly CustomerService _customerService;
 
-        public CustomerController(CustomerService customerService)
+        public CustomerController(DbContextMemory context)
         {
-            _customerService = customerService;
+            _customerService = new CustomerService(context) ;
         }
 
         /// <summary>

@@ -13,7 +13,7 @@ public class DbContextMemory : DbContext
     public DbSet<Customer> Customers { get; set; } 
     public DbSet<Travel> Travels { get; set; }
     public DbSet<Tag> Tags { get; set; }
-    public DbSet<TravelPackage> TravelPackages { get; set; }
+    //public DbSet<TravelPackage> TravelPackages { get; set; }
     
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {

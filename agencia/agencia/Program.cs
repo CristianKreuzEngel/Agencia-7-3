@@ -1,13 +1,8 @@
-using System;
-using System.Linq;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.EntityFrameworkCore;
 using agencia.Database;
-using agencia.Interfaces;
-using agencia.Repositories;
-using agencia.Services;
 using Microsoft.OpenApi.Models;
 
 
@@ -20,8 +15,7 @@ builder.Services.AddDbContext<DbContextMemory>(options =>
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddControllers();
 
-builder.Services.AddScoped<CustomerService>();
-builder.Services.AddScoped<TravelService>();
+
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo
@@ -36,8 +30,7 @@ builder.Services.AddSwaggerGen(c =>
         }
     });
 });
-builder.Services.AddScoped<ICustomerRepository, CustomerRepository>();
-builder.Services.AddScoped<ITravelRepository, TravelRepository>();
+
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())

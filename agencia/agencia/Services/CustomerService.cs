@@ -1,19 +1,21 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using agencia.Database;
 using agencia.DTOs;
 using agencia.Interfaces;
 using agencia.Models;
+using agencia.Repositories;
 
 namespace agencia.Services
 {
     public class CustomerService
     {
-        private readonly ICustomerRepository _customerRepository;
+        private readonly CustomerRepository _customerRepository;
 
-        public CustomerService(ICustomerRepository customerRepository)
+        public CustomerService(DbContextMemory context)
         {
-            _customerRepository = customerRepository;
+            _customerRepository = new CustomerRepository(context);
         }
 
         public async Task<List<CustomerDto>> GetCustomersAsync()

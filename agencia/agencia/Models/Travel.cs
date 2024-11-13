@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace agencia.Models
 {
@@ -7,6 +8,6 @@ namespace agencia.Models
         public int Id { get; set; }
         public DateTime Date { get; set; }
         public string Destination { get; set; }
-        public Customer Customer { get; set; } // Cliente que irá viajar
+        public Customer Customer { get; set; }
     }
 }

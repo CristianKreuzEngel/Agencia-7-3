@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using agencia.Database;
 using agencia.DTOs;
 using Microsoft.AspNetCore.Mvc;
 using agencia.Models;
@@ -13,9 +14,9 @@ namespace agencia.Controllers
     {
         private readonly TravelService _travelService;
 
-        public TravelController(TravelService travelService)
+        public TravelController(DbContextMemory context)
         {
-            _travelService = travelService;
+            _travelService = new TravelService(context);
         }
 
         /// <summary>

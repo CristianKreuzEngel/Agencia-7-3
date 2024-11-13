@@ -1,9 +1,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using agencia.Database;
 using agencia.DTOs;
 using agencia.Interfaces;
 using agencia.Models;
+using agencia.Repositories;
 
 namespace agencia.Services
 {
@@ -11,9 +13,9 @@ namespace agencia.Services
     {
         private readonly ITravelRepository _travelRepository;
 
-        public TravelService(ITravelRepository travelRepository)
+        public TravelService(DbContextMemory context)
         {
-            _travelRepository = travelRepository;
+            _travelRepository = new TravelRepository(context);
         }
 
         public async Task<List<TravelDTO>> GetTravelsAsync()
