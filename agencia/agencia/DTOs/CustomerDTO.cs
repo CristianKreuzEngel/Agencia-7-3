@@ -1,11 +1,11 @@
 using System.Collections.Generic;
 
-namespace agencia.Models
+namespace agencia.DTOs
 {
-    public class Customer
+    public class CustomerDto
     {
         public int Id { get; set; }
         public string Name { get; set; }
-        public List<Tag> Preferences { get; set; }
+        public List<string> Preferences { get; set; }
     }
 }

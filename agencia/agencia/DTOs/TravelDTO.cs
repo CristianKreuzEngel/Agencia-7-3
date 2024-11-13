@@ -1,12 +1,12 @@
 using System;
 
-namespace agencia.Models
+namespace agencia.DTOs
 {
-    public class Travel
+    public class TravelDTO
     {
         public int Id { get; set; }
         public DateTime Date { get; set; }
         public string Destination { get; set; }
-        public Customer Customer { get; set; } // Cliente que irá viajar
+        public int CustomerId { get; set; }
     }
 }
