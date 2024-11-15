@@ -1,7 +1,10 @@
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using agencia.Database;
 using agencia.DTOs;
+using agencia.Models;
 using Microsoft.AspNetCore.Mvc;
 using agencia.Models;
 using agencia.Services;
@@ -23,9 +26,9 @@ namespace agencia.Controllers
         /// Retorna a lista de todas as viagens.
         /// </summary>
         [HttpGet]
-        public async Task<List<TravelDTO>> GetTravels()
+        public async Task<ActionResult<List<TravelDTO>>> GetTravels()
         {
-            return await _travelService.GetTravelsAsync();
+            return Ok(await _travelService.GetTravelsAsync());
         }
 
         /// <summary>
@@ -37,38 +40,81 @@ namespace agencia.Controllers
         {
             var travel = await _travelService.GetTravelByIdAsync(id);
             if (travel == null)
-            {
-                return NotFound();
-            }
-            return travel;
+                return NotFound("Viagem não encontrada.");
+            
+            return Ok(travel);
         }
 
         /// <summary>
         /// Adiciona uma nova viagem.
         /// </summary>
-        /// <param name="travel">Dados da viagem a ser adicionada</param>
+        /// <param name="travelCreateDto">Dados da viagem a ser adicionada</param>
         [HttpPost]
-        public async Task<ActionResult<Travel>> AddTravel(Travel travel)
+        public async Task<ActionResult<TravelDTO>> AddTravel([FromBody] TravelCreateDto travelCreateDto)
         {
-            var newTravel = await _travelService.AddTravelAsync(travel);
-            return CreatedAtAction(nameof(GetTravelById), new { id = newTravel.Id }, newTravel);
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+            
+            try
+            {
+                var travel = new Travel
+                {
+                    Date = travelCreateDto.Date,
+                    Destination = travelCreateDto.Destination,
+                    Customer = new Customer { Id = travelCreateDto.CustomerId }
+                };
+
+                var newTravel = await _travelService.AddTravelAsync(travel);
+                return CreatedAtAction(nameof(GetTravelById), new { id = newTravel.Id }, newTravel);
+            }
+            catch (Exception ex)
+            {
+                // Logar exceção detalhada
+                Console.WriteLine($"Erro ao adicionar viagem: {ex.Message}");
+                return StatusCode(500, "Erro interno do servidor.");
+            }
         }
 
         /// <summary>
         /// Atualiza uma viagem existente.
         /// </summary>
         /// <param name="id">ID da viagem a ser atualizada</param>
-        /// <param name="travel">Dados atualizados da viagem</param>
+        /// <param name="travelUpdateDto">Dados atualizados da viagem</param>
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateTravel(int id, Travel travel)
+        public async Task<IActionResult> UpdateTravel(int id, [FromBody] TravelCreateDto travelUpdateDto)
         {
-            if (id != travel.Id)
-            {
-                return BadRequest();
-            }
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
 
-            await _travelService.UpdateTravelAsync(travel);
-            return NoContent();
+            try
+            {
+                TravelDTO travelDTO = await _travelService.GetTravelByIdAsync(id);
+                Travel travel = new Travel
+                {
+                    Id = travelDTO.Id,
+                    Date = travelDTO.Date,
+                    Destination = travelDTO.Destination,
+                    Customer = new Customer { Id = travelDTO.CustomerId }
+                };
+
+                if (travel == null)
+                {
+                    return NotFound("Viagem não encontrada.");
+                }
+
+                travel.Date = travelUpdateDto.Date;
+                travel.Destination = travelUpdateDto.Destination;
+                travel.Customer = new Customer { Id = travelUpdateDto.CustomerId };
+
+                await _travelService.UpdateTravelAsync(travel);
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                // Logar exceção detalhada
+                Console.WriteLine($"Erro ao atualizar a viagem com ID {id}: {ex.Message}");
+                return StatusCode(500, "Erro interno do servidor.");
+            }
         }
 
         /// <summary>
@@ -78,8 +124,21 @@ namespace agencia.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteTravel(int id)
         {
-            await _travelService.DeleteTravelAsync(id);
-            return NoContent();
+            try
+            {
+                var existingTravel = await _travelService.GetTravelByIdAsync(id);
+                if (existingTravel == null)
+                    return NotFound("Viagem não encontrada.");
+                
+                await _travelService.DeleteTravelAsync(id);
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                // Logar exceção detalhada
+                Console.WriteLine($"Erro ao remover a viagem com ID {id}: {ex.Message}");
+                return StatusCode(500, "Erro interno do servidor.");
+            }
         }
     }
 }

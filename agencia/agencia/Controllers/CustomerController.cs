@@ -1,6 +1,9 @@
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using agencia.Database;
+using agencia.DTOs;
 using agencia.DTOs;
 using Microsoft.AspNetCore.Mvc;
 using agencia.Models;
@@ -16,16 +19,16 @@ namespace agencia.Controllers
 
         public CustomerController(DbContextMemory context)
         {
-            _customerService = new CustomerService(context) ;
+            _customerService = new CustomerService(context);
         }
 
         /// <summary>
         /// Retorna a lista de todos os clientes.
         /// </summary>
         [HttpGet]
-        public async Task<List<CustomerDto>> GetCustomers()
+        public async Task<ActionResult<List<CustomerDto>>> GetCustomers()
         {
-            return await _customerService.GetCustomersAsync();
+            return Ok(await _customerService.GetCustomersAsync());
         }
 
         /// <summary>
@@ -33,38 +36,82 @@ namespace agencia.Controllers
         /// </summary>
         /// <param name="id">ID do cliente</param>
         [HttpGet("{id}")]
-        public async Task<CustomerDto> GetCustomerById(int id)
+        public async Task<ActionResult<CustomerDto>> GetCustomerById(int id)
         {
             var customer = await _customerService.GetCustomerByIdAsync(id);
-            return customer;
+            if (customer == null)
+                return NotFound("Cliente não encontrado.");
+            
+            return Ok(customer);
         }
 
         /// <summary>
         /// Adiciona um novo cliente.
         /// </summary>
-        /// <param name="customer">Dados do cliente a ser adicionado</param>
+        /// <param name="customerCreateDto">Dados do cliente a ser adicionado</param>
         [HttpPost]
-        public async Task<ActionResult<Customer>> AddCustomer(Customer customer)
+        public async Task<ActionResult<CustomerDto>> AddCustomer([FromBody] CustomerCreateDto customerCreateDto)
         {
-            var newCustomer = await _customerService.AddCustomerAsync(customer);
-            return CreatedAtAction(nameof(GetCustomerById), new { id = newCustomer.Id }, newCustomer);
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+            
+            try
+            {
+                var customer = new Customer
+                {
+                    Name = customerCreateDto.Name,
+                    Preferences = customerCreateDto.Preferences.Select(p => new Tag { Name = p }).ToList()
+                };
+
+                var newCustomer = await _customerService.AddCustomerAsync(customer);
+                return CreatedAtAction(nameof(GetCustomerById), new { id = newCustomer.Id }, newCustomer);
+            }
+            catch (Exception ex)
+            {
+                // Logar exceção detalhada
+                Console.WriteLine($"Erro ao adicionar cliente: {ex.Message}");
+                return StatusCode(500, "Erro interno do servidor.");
+            }
         }
 
         /// <summary>
         /// Atualiza um cliente existente.
         /// </summary>
         /// <param name="id">ID do cliente a ser atualizado</param>
-        /// <param name="customer">Dados atualizados do cliente</param>
+        /// <param name="customerUpdateDto">Dados atualizados do cliente</param>
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateCustomer(int id, Customer customer)
+        public async Task<IActionResult> UpdateCustomer(int id, [FromBody] CustomerUpdateDto customerUpdateDto)
         {
-            if (id != customer.Id)
-            {
-                return BadRequest();
-            }
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
 
-            await _customerService.UpdateCustomerAsync(customer);
-            return NoContent();
+            try
+            {
+                var customerDto = await _customerService.GetCustomerByIdAsync(id);
+                Customer customer = new Customer
+                {
+                    Id = customerDto.Id,
+                    Name = customerDto.Name,
+                    Preferences = customerDto.Preferences.Select(p => new Tag { Name = p.Name }).ToList()
+                };
+
+                if (customer == null)
+                {
+                    return NotFound("Cliente não encontrado.");
+                }
+
+                customer.Name = customerUpdateDto.Name;
+                customer.Preferences = customerUpdateDto.Preferences.Select(p => new Tag { Name = p }).ToList();
+
+                await _customerService.UpdateCustomerAsync(customer);
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                // Logar exceção detalhada
+                Console.WriteLine($"Erro ao atualizar o cliente com ID {id}: {ex.Message}");
+                return StatusCode(500, "Erro interno do servidor.");
+            }
         }
 
         /// <summary>
@@ -74,8 +121,21 @@ namespace agencia.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteCustomer(int id)
         {
-            await _customerService.DeleteCustomerAsync(id);
-            return NoContent();
+            try
+            {
+                var existingCustomer = await _customerService.GetCustomerByIdAsync(id);
+                if (existingCustomer == null)
+                    return NotFound("Cliente não encontrado.");
+                
+                await _customerService.DeleteCustomerAsync(id);
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                // Logar exceção detalhada
+                Console.WriteLine($"Erro ao remover o cliente com ID {id}: {ex.Message}");
+                return StatusCode(500, "Erro interno do servidor.");
+            }
         }
     }
 }
