@@ -4,39 +4,52 @@ using System.Linq;
 using System.Threading.Tasks;
 using agencia.Database;
 using agencia.DTOs;
-using Microsoft.EntityFrameworkCore;
+using agencia.Interfaces;
+using agencia.Repositories;
 
 namespace agencia.Services
 {
-    /// <summary>
-    /// Serviço responsável por gerar relatórios.
-    /// </summary>
     public class ReportService
     {
-        private readonly DbContextMemory _context;
+        private readonly ITravelReportRepository _travelRepository;
 
-        /// <summary>
-        /// Construtor que recebe o contexto do banco de dados.
-        /// </summary>
-        /// <param name="context">Contexto do banco de dados</param>
-        public ReportService(DbContextMemory context)
+        public ReportService(DbContextMemory travelRepository)
         {
-            _context = context;
+            _travelRepository = new TravelReportRepository(travelRepository);
         }
 
-        /// <summary>
-        /// Gera um relatório de clientes que vão viajar na semana.
-        /// </summary>
-        /// <returns>Lista de clientes e suas respectivas viagens para a semana</returns>
         public async Task<List<CustomerTravelReportDto>> GetWeeklyTravelReportAsync()
         {
             var startDate = DateTime.UtcNow;
             var endDate = startDate.AddDays(7);
 
-            var travels = await _context.Travels
-                .Include(t => t.Customer)
-                .Where(t => t.Date >= startDate && t.Date <= endDate)
-                .ToListAsync();
+            return await GenerateTravelReportAsync(startDate, endDate);
+        }
+
+        public async Task<List<CustomerTravelReportDto>> GetMonthlyTravelReportAsync()
+        {
+            var startDate = new DateTime(DateTime.UtcNow.Year, DateTime.UtcNow.Month, 1);
+            var endDate = startDate.AddMonths(1).AddDays(-1);
+
+            return await GenerateTravelReportAsync(startDate, endDate);
+        }
+
+        public async Task<List<CustomerTravelReportDto>> GetYearlyTravelReportAsync()
+        {
+            var startDate = new DateTime(DateTime.UtcNow.Year, 1, 1);
+            var endDate = new DateTime(DateTime.UtcNow.Year, 12, 31);
+
+            return await GenerateTravelReportAsync(startDate, endDate);
+        }
+
+        public async Task<List<CustomerTravelReportDto>> GetCustomTravelReportAsync(DateTime startDate, DateTime endDate)
+        {
+            return await GenerateTravelReportAsync(startDate, endDate);
+        }
+
+        private async Task<List<CustomerTravelReportDto>> GenerateTravelReportAsync(DateTime startDate, DateTime endDate)
+        {
+            var travels = await _travelRepository.GetTravelsInDateRangeAsync(startDate, endDate);
 
             var report = travels.Select(t => new CustomerTravelReportDto
             {
@@ -47,15 +60,5 @@ namespace agencia.Services
 
             return report;
         }
-    }
-
-    /// <summary>
-    /// DTO para o relatório de clientes que vão viajar na semana.
-    /// </summary>
-    public class CustomerTravelReportDto
-    {
-        public string CustomerName { get; set; }
-        public DateTime TravelDate { get; set; }
-        public string Destination { get; set; }
     }
 }

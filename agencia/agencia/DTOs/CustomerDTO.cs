@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using agencia.Models;
@@ -31,5 +32,12 @@ namespace agencia.DTOs
         public string Name { get; set; }
         
         public List<string> Preferences { get; set; } = new List<string>();
+    }
+    
+    public class CustomerTravelReportDto
+    {
+        public string CustomerName { get; set; }
+        public DateTime TravelDate { get; set; }
+        public string Destination { get; set; }
     }
 }
